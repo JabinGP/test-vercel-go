@@ -2,8 +2,8 @@ package handler
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
-	"json"
 	"net/http"
 )
 
