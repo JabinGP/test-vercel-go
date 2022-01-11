@@ -69,22 +69,23 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	keywords := r.FormValue("keywords")
 	query := bleve.NewMatchQuery(keywords)
 	search := bleve.NewSearchRequest(query)
+	search.Fields = []string{"Slug", "Title", "Excerpt"}
 	searchResults, err := index.Search(search)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	var res []string
-	for _, hit := range searchResults.Hits {
-		raw, err := index.GetInternal([]byte(hit.ID))
-		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		res = append(res, string(raw))
-	}
+        type Result = map[string]interface{}
+        var res []Result
+        for _, hit := range searchResults.Hits {
+                res = append(res, Result{
+                        "slug":    hit.Fields["Slug"],
+                        "title":   hit.Fields["Title"],
+                        "excerpt": hit.Fields["Excerpt"],
+                })
+        }
 	resBts, err := json.Marshal(res)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	fmt.Fprintf(w, string(resBts))
 }
